@@ -32,7 +32,7 @@ To complete this tutorial, be sure to have all files that were uploaded to the c
 # First, let's install qiime2R:
 ```{r}
 if (!requireNamespace("devtools", quietly = TRUE)){install.packages("devtools")}
-devtools::install_github("jbisanz/qiime2R")
+if (!requireNamespace("qiime2R", quietly = TRUE)){devtools::install_github("jbisanz/qiime2R")}
 ```
 
 # Now load in the libraries we will use for this tutorial:

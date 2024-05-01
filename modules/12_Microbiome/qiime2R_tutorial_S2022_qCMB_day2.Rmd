@@ -66,6 +66,8 @@ bray_curtis$data$Vectors %>%
 ```
 What kind of trend, or "clustering" do you see?
 
+**'Wild type and PD' and 'susceptible and PD' are clustered together on the PC1 axis. Similarly, 'Susceptible and healthy' and 'Wild type and healthy' are clustered together along the same PC1 axis. There is no clear clustering along PC2 axis.**
+
 # Let's make PCoA plots for each of the other discussed metrics. We can do these all in one code chunk, and then click the output boxes to see each of the plots.
 ```{r}
 jaccard$data$Vectors %>%
@@ -96,6 +98,8 @@ we_unifrac$data$Vectors %>%
   scale_color_discrete(name = "Genotype and Donor Status")
 ```
 What can you say based on the differences in beta diversity patterns between each of the metrics?
+
+**Jaccard and Unweighted UniFrac are very similar in their beta diversity patterns as the difference between clusters is explained by PC1. Weighted UNiFrac is different from the other two in that the clustering is explained by a combination of PC1 and PC2**
 
 In QIIME2, you can and should do a PERMANOVA test to add statistical significance to the clustering we see here. Since doing this test is a bit more complicated in R, especially when using distance matrices that were made in QIIME2, we won't do this today. Instead, we will test which features are differentially abundant between our groups of interest. 
 
@@ -146,7 +150,7 @@ genus_data = aggregate_taxa(physeq, "Genus")
 # Run ANCOM-BC. For simplicity, we will do this only with the donor group (healthy or PD)
 ```{r}
 out = ancombc(phyloseq = genus_data, formula = "genotype_and_donor_status", 
-              p_adj_method = "holm", zero_cut = 0.90, lib_cut = 1000, 
+              p_adj_method = "holm", lib_cut = 1000, 
               group = "genotype_and_donor_status", struc_zero = TRUE, neg_lb = TRUE, tol = 1e-5, 
               max_iter = 100, conserve = TRUE, alpha = 0.05, global = TRUE)
 res = out$res
@@ -154,6 +158,8 @@ res_global = out$res_global
 ```
 
 Click on the output res_global. Are there any differentially abundant taxa? From this output, are you able to tell what groups the taxa are differentially abundant between?
+
+**Yes there are alot of differentially abundant taxa. No you cannot tell which groups those taxa are differentially abundant between**
 
 # Now that we have run ANCOM-BC, we can look more closely at what taxa are differentially abundant between which groups
 
@@ -180,9 +186,22 @@ colnames(tab_diff) = col_name
 tab_diff %>% 
   datatable(caption = "Differentially Abundant Taxa 
             from the Primary Result")
+
+S_Healthy_WT_PD <- tab_diff %>%
+  select(`S.Healthy - S.PD`,`S.Healthy - WT.PD`,) %>% 
+  filter(`S.Healthy - WT.PD` == TRUE)
+
+S_Healthy_WT_Healthy <- tab_diff %>%
+  select(`S.Healthy - S.PD`,`S.Healthy - WT.Healthy`,) %>% 
+  filter(`S.Healthy - WT.Healthy` == TRUE)
+
 ```
 
 Which taxa are differentially abundant between the genotype and donor status groups?
+
+***Collinsella, Paraprevotella, Alistipes, Enterococcus, Christensenella, Pseudoramibacter_Eubacterium, Ruminococcus, Blautia, rc4-4, Anaerofilum, Butyricicoccus, Gemmiger, Holdemania, Sutterella, and Akkermansia are differentially abundant between S.Healthy and WT.PD.***
+
+***Butyricimonas, Paraprevotella, Bacteroides, Parabacteroides, Alistipes, Cloacibacterium, Turicibacter, Christensenella, Pseudoramibacter_Eubacterium, Blautia, Clostridium, Coprococcus, Anaerofilum, Faecalibacterium, Oscillospira, Ruminococcus, and Unknown are differentially abundant between S.Healthy and WT.Healthy.***
 
 What if we want to see a visualization of all of the taxa within our data set? While there are lots of ways that we can do this, today we will do two. First, we will look at our taxonomic composition for each sample using a taxa bar plot.
 
@@ -207,3 +226,53 @@ taxa_barplot(taxasums, metadata, "donor")
 taxa_heatmap(taxasums, metadata, "genotype_and_donor_status")
 taxa_heatmap(taxasums, metadata, "donor")
 ```
+
+
+Day 1 (2 pts each):
+
+1.  Compare and contrast Metagenomics vs amplicon sequencing, and list a benefit and drawback of each one.
+
+**Metagenomic sequencing yields whole genomes of all organisms in a sample while amplicon sequencing yields specific barcode sequences for all organisms which contain that specific barcode gene. Metagenome sequencing allows you to infer the genetic potential as well as identiy of the taxa present but is costly. Amplicon sequencing only allows you to infer relative abundances of taxa present but is cheaper**
+
+2.  Look at the "print_provenance(SVs)" output. What was the sequencing platform (Single End or Paired End)?
+
+**SingleEnd**
+
+3.  What components are included in metadata and why is detailed and robust metadata important? 
+
+**All the data linked to your samples. Without this metadata, our data analysis would be meaningless.**
+
+4.  What is the statistical test for pairwise comparison between the groups in the plots?
+
+**Wilcoxon rank sum test**
+
+5.  Which comparisons were statistically significant from Shannon's alpha diversity?
+
+**Susceptible and PD vs. Susceptible and Healthy: p = 0.00013**
+
+**Wild type and PD vs. Wild type and Healthy: p = 0.00149 **
+
+Day 2 (2 pts each):
+
+6.  What is rarefaction and what are the benefits and drawbacks?
+
+**Rarefaction standardizes the comparison of species richness or diversity across samples with different sample sizes. It allows for fair comparison of diversity measures among samples with different sample sizes but loss of information due to standardization.**
+
+7.  What does beta diversity show that alpha diversity doesn't?
+
+**Beta diversity shows the variation between different samples** 
+
+8.  What is ANCOM-BC used for and why did we use it in this class? 
+**It is used to identify taxa that are significantly different between groups while accounting for variability in microbiome data.**
+
+9.  Which taxa are differentially abundant between the genotype and donor status groups?
+
+***Collinsella, Paraprevotella, Alistipes, Enterococcus, Christensenella, Pseudoramibacter_Eubacterium, Ruminococcus, Blautia, rc4-4, Anaerofilum, Butyricicoccus, Gemmiger, Holdemania, Sutterella, and Akkermansia are differentially abundant between S.Healthy and WT.PD.***
+
+***Butyricimonas, Paraprevotella, Bacteroides, Parabacteroides, Alistipes, Cloacibacterium, Turicibacter, Christensenella, Pseudoramibacter_Eubacterium, Blautia, Clostridium, Coprococcus, Anaerofilum, Faecalibacterium, Oscillospira, Ruminococcus, and Unknown are differentially abundant between S.Healthy and WT.Healthy.***
+
+10.  What do the taxa_barplots show? (Think relative abundances between samples)
+
+**relative abundances between samples**
+
+
