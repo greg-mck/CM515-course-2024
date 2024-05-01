@@ -1,0 +1,54 @@
+
+Protocol
+1. Open the R console and load the ggplot2 package
+Launch an R or RStudio console session. Load ggplot2 with the following command.
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+```
+
+2. Import data
+Read in the data with the following command (you may need to change your working directory or provide the path to where you stored this data file):
+
+```{r}
+mutationRate = read.delim ("MutationRate.txt")
+```
+
+Check out the structure of the dataset by using the str functioning and printing the first five rows of data with the following commands:
+
+```{r}
+str(mutationRate)
+
+mutationRate[1:5,]
+```
+
+Create plot.
+
+```{r}
+p <- ggplot(data = mutationRate, aes(x = Genotype, y = MutationRate, color = Genome)) +
+geom_jitter(width = .2, size = 2,alpha = .5)+
+  scale_y_log10()+
+  facet_grid(Genome ~ MutationType)
+
+p
+
+# p <- ggplot(data = mutationRate, aes(x = Genotype, y = MutationRate, color = Genome)) +
+# geom_point(width = .2, size = 2,alpha = .5)+
+#   scale_y_log10()+
+#   facet_grid(Genome ~ MutationType)
+# 
+# p
+```
+
+I chose to plot Genotype on X axis and Mutation Rate on Y axis because that is the basis of the biological question. I chose jitter for the geometry so that we could show ALL the data, seeing as there's only three replicates per condition. I chose to use facet_grid to break the plots into 4 combinations of Genome and MutationType variables so that those two other variables could be assessed by the viewer. I redundantly colored the points by Genome because it looks nice. I log transformed the y axis so that the proportional changes of some treatments compared to wild type could more easily be seen. 
+
+
+There are multiple ways to output a figure to a PDF. One is use the pdf and dev.off commands as follows (you can also explore the ggsave command as well as exporting from the viewer from RStudio).
+
+```{r}
+pdf ("mutationRate.pdf")  
+p 
+dev.off()
+dev.off()
+```

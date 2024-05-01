@@ -1,0 +1,57 @@
+
+
+```{r}
+plot.new()
+polygon(c(0, 0, 0.2, 0.2), c(0, 0.7, 0.7, 0))
+polygon(c(0.3, 0.4, 0.5), c(0.05, 0.4, 0.05), lwd=4)
+polygon (c(0, 0.1, 0.5, 0.5, 0.1), c(0.4, 0.5, 0.5, 0.3, 0.3), col="chartreuse4")
+segments (0.3, 0.1, 0.8, 0.2, col="steelblue", lwd=2)
+text (0.7, 0.7, "CM 515 Abstract Art")
+```
+
+```{r}
+plot.new()
+segments (0.01, 0, 0.99, 0, col="black", lwd=1)
+segments (0.01, 0.2, 0.99, 0.2, col="black", lwd=1)
+segments (0.01, 0.4, 0.99, 0.4, col="black", lwd=1)
+segments (0.01, 0.6, 0.99, 0.6, col="black", lwd=1)
+
+for contig in contig_lengths.txt
+  
+
+
+
+
+
+
+```
+
+
+
+```{r}
+library(tidyverse)
+library(dplyr)
+
+# Read the contig lengths from the file
+contig_lengths <- read.table("contig_lengths.txt", header = TRUE)
+contig_lengths <- contig_lengths %>% 
+  mutate(proportional_length = Length / max(Length))
+
+# Set up the plotting area
+plot.new()
+# plot(0, 0, type = "n", xlim = c(0, max(contig_lengths$proportional_length)), ylim = c(0, nrow(contig_lengths)),
+#      xlab = "Proportional Length", ylab = "Contig")
+
+# Loop through each contig
+for (i in 1:nrow(contig_lengths)) {
+  # Get the proportional length of the current contig
+  length <- contig_lengths$proportional_length[i]
+  
+  # Draw a line segment for the current contig
+  segments(0, i, length, i)
+}
+
+
+
+
+```

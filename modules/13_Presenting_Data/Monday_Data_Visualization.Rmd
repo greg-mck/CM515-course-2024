@@ -1,0 +1,161 @@
+
+Protocol
+1. Open the R console and load the ggplot2 package
+Launch an R or RStudio console session. Load ggplot2 with the following command.
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+```
+
+2. Import RNA-seq summary data
+We are going to work from a data set that summarizes read depth from RNA-seq reads that were mapped onto a genome that consists of multiple chromosomes. It is called SlidingWindow.txt and can be downloaded here.
+
+Read in the data with the following command (you may need to change your working directory or provide the path to where you stored this data file):
+
+```{r}
+RNAseq = read.delim ("SlidingWindow.txt")
+```
+
+Check out the structure of the dataset by using the str functioning and printing the first five rows of data with the following commands:
+
+```{r}
+str(RNAseq)
+
+RNAseq[1:5,]
+```
+
+Note that there are five data columns, containing the following.
+
+Chrom – Chromosome number
+Pos – Nucleotide position for a 250-bp window used to calculated average read depth
+Region – Identification of the corresponding window as either “genic” or “intergenic”
+RCM – Average read depth in the corresponding window expressed as read count per million
+Enrichment – Proportional enrichment of coverage in a mitochondrial fraction relative to total cellular RNA (log scale)
+
+3. Generate a subset of the data that only includes a single chromosome
+Even though this data file is a highly reduced summary of the raw RNA-seq data, it still contains more than 28,000 data points for 63 different chromosomes. Let’s simplify a little by selecting the subset of data points that are from Chromosome 21 and start with those. The which function in the R base package is useful for this.
+
+```{r}
+RNAseq_chrom21 = RNAseq[which(RNAseq$Chrom==21),]
+
+```
+Note that if you have tidyverse installed and loaded, you can also use the filter function in dplyr, which is a little more readable: 
+
+```{r}
+RNAseq_chrom21 = RNAseq %>% filter(Chrom==21)
+```
+
+4. Generate plots of read depth along the length of chromosome 21 with ggplot
+Let’s begin by defining a new plot with the ggplot function. We will work from the data subset for chromosome 21 only, and we will make nucleotide position our x-variable and read depth our y-variable.
+
+```{r}
+singlePlot = ggplot (data=RNAseq_chrom21, aes(x=Pos, y=RCM))
+
+```
+
+
+Now, try viewing that plot by entering its name on the command line.
+
+```{r}
+singlePlot
+```
+
+Oops. That gave us a blank plot. This is a common mistake (and source of frustration) with ggplot. In the native plot function in R, simply defining the x- and y-variables is sufficient to generate a plot. For example:
+
+```{r}
+plot (RNAseq_chrom21$Pos, RNAseq_chrom21$RCM)
+```
+But this is not sufficient for ggplot. In this case, we have only done the aesthetic mappings to associate the variables Pos and RCM in the dataset with the X and Y positions, respectively. To visualize the data, we need to specify at least one geometry. Let’s generate a scatter plot by adding the geom_point() statement. This will inherit the mapping information from the aes() arguments in the main ggplot call.
+
+
+```{r}
+singlePlot = ggplot (data=RNAseq_chrom21, aes(x=Pos, y=RCM)) + geom_point()
+
+singlePlot
+```
+
+Now, let’s distinguish between “genic” and “intergenic” regions as defined in the input file. We can add to our aesthetic mappings by including a color statement and associating with the Region variable in our data set..
+
+```{r}
+singlePlot = ggplot (data=RNAseq_chrom21, aes(x=Pos, y=RCM, color=Region)) + geom_point()
+
+singlePlot
+```
+
+If you are not fond of the color scheme, you can modify it by adding an additional statement to the existing plot.
+
+```{r}
+singlePlot + scale_color_manual(values=c("red", "black"))
+```
+Now we see that the region of highest expression is an annotated gene. But there are also highly expressed regions in uncharacterized intergenic sequence. Note that we could have used an alternative color scheme for our points. For example, instead of putting them into two categories (genic and intergenic) we could have used a “heat map” to color them based on a continuous variable such as Enrichment (see above for description of the Enrichment data). Let’s try that by defining a new plot entirely.
+
+```{r}
+singlePlot2 = ggplot (data=RNAseq_chrom21, aes(x=Pos, y=RCM, color=Enrichment)) + geom_point()
+
+singlePlot2
+```
+Now the shading of the points reflects the extent to which the transcripts are enriched in the mitochondria relative to the total-cellular fraction (lighter blue indicates more enrichment). If you don’t like the default color scheme, the viridis package offers a nice palette for heat maps (and note that this palette is better perceived by color-blind individuals than classic red/green heat map scales). We can amend our stored plot as follows. Note that if you don’t have the viridis package installed you can add it with install.packages("viridis").
+
+```{r}
+library(viridis)
+```
+
+```{r}
+singlePlot2 + scale_color_viridis()
+```
+
+Now, we clearly see that most of the highly expressed regions are also greatly enriched in mitochondrial RNA samples. But that is not the case for one region (three purple points around position 10 kb). This region is likely a foreign chloroplast or nuclear gene that has been inserted into the mitochondrial genome but not actually highly expressed in the mitochondria themselves.
+
+Above, we made a modification to a stored plot (singlePlot2). But we can also build up the full code in one statement, and you do not always need to store your plot in a vairable. Just running the code without assigning it to a variable will automatically display the results. Let’s just enter the full code for the next step. It is often best to display expression data on a log-scale, so let’s make a further modification to the y-axis scale.
+
+
+```{r}
+ggplot (data=RNAseq_chrom21, aes(x=Pos, y=RCM, color=Enrichment)) + geom_point() + scale_color_viridis() + scale_y_log10()
+```
+
+It’s always good to label your axes clearly. Let’s change the axes labels to something a little less cryptic. Note that this involves editing the theme of the plot (i.e., the non-data text and lines that appear on the plot). This can be done with the theme function, but xlab and ylab are shortcuts for just setting the axes labels.
+
+```{r}
+ggplot (data=RNAseq_chrom21, aes(x=Pos, y=RCM, color=Enrichment)) + geom_point() + scale_color_viridis() + scale_y_log10() + xlab("Nucleotide Position") + ylab("Read Count Per Million")
+```
+
+Hmmm. When we scale this up to a multipanel figure, we might not be able to write out those long number for the x-axis positions. Let’s convert those to kb by changing our x mapping from Pos to Pos/1000 and updating our xlab accordingly to indicate that the scale is in kb.
+
+```{r}
+ggplot (data=RNAseq_chrom21, aes(x=Pos/1000, y=RCM, color=Enrichment)) + geom_point() + scale_color_viridis() + scale_y_log10() + xlab("Nucleotide Position (kb)") + ylab("Read Count Per Million")
+```
+Speaking of space, having a smaller point size might help us down the line. You can map size to a variable with aes() if you want it to reflect some aspect of your dataset, but you can also set it to a constant as an attribute of geom_point. Let’s reduce the point size by adding size=0.5 to our geom_point() call. This might be smaller than we’d like for a single plot like this, but it will help reduce overlap when we build up to a dense multipanel plot.
+
+```{r}
+ggplot (data=RNAseq_chrom21, aes(x=Pos/1000, y=RCM, color=Enrichment)) + geom_point(size=0.5) + scale_color_viridis() + scale_y_log10() + xlab("Nucleotide Position (kb)") + ylab("Read Count Per Million")
+```
+
+One last tweak to our individual plot. There are numerous theme elements you can adjust individually, but ggplot also provides pre-packaged themes. For example, theme_bw() and theme_classic() can provide a bit of a cleaner overall look than the default theme and its gray plot background. Let’s add + theme_bw() to update our theme.
+
+```{r}
+ggplot (data=RNAseq_chrom21, aes(x=Pos/1000, y=RCM, color=Enrichment)) + geom_point(size=0.5) + scale_color_viridis() + scale_y_log10() + xlab("Nucleotide Position (kb)") + ylab("Read Count Per Million") + theme_bw()
+```
+
+5. Generate a multipanel figure showing read depth across each of the 63 chromosomes
+We have just developed code to plot read depth along the length of a single chromosome. But what about the other 62 chromosomes in this genome? It turns out that with very small additions and modifications to our existing code, we can generate a single figure with a separate panel for each and everyone of the chromosomes. Compare the following code for plotting data from all 63 chromosomes to what we just ran above for a single chromosome.
+
+```{r}
+multiPlot <- ggplot (data=RNAseq, aes(x=Pos/1000, y=RCM, color=Enrichment)) + geom_point(size=0.5) + scale_color_viridis() + scale_y_log10() + xlab("Nucleotide Position (kb)") + ylab("Read Count Per Million") + theme_bw() + scale_x_continuous (breaks=c(0,75,150)) + facet_wrap(~Chrom, nrow=7)
+
+multiPlot
+```
+
+The two commands are almost exactly the same. As highlighted in bold text, the only differences are that 1) we are now using the full dataset with all chromosomes (RNAseq instead of RNAseq_chrom21), 2) we have manually set the breaks on the x-acis for tick marks to improve readability, and 3) we have added the facet_wrap statement, which separates the analysis by chromosome and reports an array of individual plots. The facet_wrap command (and related facet_grid command) is an extremely valuable feature of ggplot, allowing you to build up complicated multipanel figures with relative ease.
+
+Try running the above code and storing it to a variable called “multiPlot”. Then print it by typing multiPlot.
+
+
+There are multiple ways to output a figure to a PDF. One is use the pdf and dev.off commands as follows (you can also explore the ggsave command as well as exporting from the viewer from RStudio).
+
+```{r}
+pdf ("multiPlot.pdf")  
+multiPlot  
+dev.off()
+dev.off()
+```
